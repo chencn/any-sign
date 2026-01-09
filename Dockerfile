@@ -7,6 +7,7 @@ WORKDIR /app
 # 复制项目文件
 COPY deno.json .
 COPY main.ts .
+COPY index.html .
 
 # 缓存依赖（利用 Docker layer cache）
 RUN deno cache main.ts
@@ -16,4 +17,4 @@ ENV PORT=7860
 EXPOSE 7860
 
 # 启动应用
-CMD ["deno", "run", "--allow-net", "--allow-env", "main.ts"]
+CMD ["deno", "run", "--allow-net", "--allow-env", "--allow-read", "main.ts"]

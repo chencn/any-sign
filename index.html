@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Anyrouter Proxy</title>
+  <style>
+    /**
+     * Apple HIG Compliant Design
+     *
+     * Design Decisions:
+     * - Uses SF Pro system font stack for native feel
+     * - Solid backgrounds for optimal readability
+     * - Supports prefers-color-scheme for auto theming
+     * - Responsive layout: compact (iOS) / regular (macOS)
+     * - 44pt minimum touch targets for accessibility
+     */
+
+    /* CSS Variables - Light Mode */
+    :root {
+      /* System Font Stack */
+      --font-system: -apple-system, BlinkMacSystemFont, 'SF Pro Display',
+                     'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+      --font-mono: 'SF Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+      /* Colors - Light Mode */
+      --system-blue: #007AFF;
+      --system-green: #34C759;
+      --system-gray: #8E8E93;
+      --system-gray5: #E5E5EA;
+      --system-gray6: #F2F2F7;
+
+      --label-primary: #000000;
+      --label-secondary: rgba(60, 60, 67, 0.6);
+      --label-tertiary: rgba(60, 60, 67, 0.3);
+
+      --bg-primary: #FFFFFF;
+      --bg-secondary: #F2F2F7;
+      --bg-tertiary: #FFFFFF;
+
+      --separator: rgba(60, 60, 67, 0.29);
+
+      /* Spacing - 8pt Grid */
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 20px;
+      --space-6: 24px;
+      --space-8: 32px;
+
+      /* Border Radius */
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+
+      /* Typography */
+      --text-body: 17px;
+      --text-headline: 17px;
+      --text-title3: 20px;
+      --text-title1: 28px;
+      --text-large-title: 34px;
+    }
+
+    /* Dark Mode */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --system-blue: #0A84FF;
+        --system-green: #30D158;
+        --system-gray: #8E8E93;
+        --system-gray5: #2C2C2E;
+        --system-gray6: #1C1C1E;
+
+        --label-primary: #FFFFFF;
+        --label-secondary: rgba(235, 235, 245, 0.6);
+        --label-tertiary: rgba(235, 235, 245, 0.3);
+
+        --bg-primary: #000000;
+        --bg-secondary: #1C1C1E;
+        --bg-tertiary: #2C2C2E;
+
+        --separator: rgba(84, 84, 88, 0.6);
+      }
+    }
+
+    /* Base Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--font-system);
+      font-size: var(--text-body);
+      color: var(--label-primary);
+      background: var(--bg-secondary);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Reduced Motion Support */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    /* Container - Responsive */
+    .container {
+      max-width: 100%;
+      margin: 0 auto;
+      padding: var(--space-4);
+    }
+
+    /* macOS: Regular Layout */
+    @media (min-width: 768px) {
+      .container {
+        max-width: 680px;
+        padding: var(--space-8) var(--space-6);
+      }
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: var(--space-8);
+      padding-top: var(--space-6);
+    }
+
+    .header__icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto var(--space-4);
+      background: linear-gradient(135deg, var(--system-blue), var(--system-green));
+      border-radius: var(--radius-xl);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+    }
+
+    .header__title {
+      font-size: var(--text-large-title);
+      font-weight: 700;
+      color: var(--label-primary);
+      margin-bottom: var(--space-2);
+      letter-spacing: -0.02em;
+    }
+
+    .header__subtitle {
+      font-size: var(--text-title3);
+      font-weight: 400;
+      color: var(--label-secondary);
+    }
+
+    /* Card - Solid Background */
+    .card {
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-lg);
+      padding: var(--space-5);
+      margin-bottom: var(--space-4);
+      box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.04),
+        0 4px 12px rgba(0, 0, 0, 0.04);
+    }
+
+    @media (min-width: 768px) {
+      .card {
+        padding: var(--space-6);
+      }
+    }
+
+    .card__title {
+      font-size: var(--text-headline);
+      font-weight: 600;
+      color: var(--label-primary);
+      margin-bottom: var(--space-3);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .card__icon {
+      font-size: 20px;
+    }
+
+    .card__content {
+      font-size: var(--text-body);
+      color: var(--label-secondary);
+      line-height: 1.6;
+    }
+
+    /* Steps List */
+    .steps {
+      list-style: none;
+      counter-reset: step-counter;
+    }
+
+    .step {
+      counter-increment: step-counter;
+      display: flex;
+      gap: var(--space-3);
+      margin-bottom: var(--space-4);
+    }
+
+    .step:last-child {
+      margin-bottom: 0;
+    }
+
+    .step__number {
+      width: 28px;
+      height: 28px;
+      min-width: 28px;
+      background: var(--system-blue);
+      color: #FFFFFF;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .step__number::before {
+      content: counter(step-counter);
+    }
+
+    .step__content {
+      flex: 1;
+      padding-top: 4px;
+      font-size: var(--text-body);
+      color: var(--label-primary);
+      line-height: 1.5;
+    }
+
+    /* Code Block */
+    .code-block {
+      position: relative;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      margin-top: var(--space-4);
+      overflow-x: auto;
+    }
+
+    .code-block__header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--space-3);
+      padding-bottom: var(--space-2);
+      border-bottom: 1px solid var(--separator);
+    }
+
+    .code-block__label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--label-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .code-block__copy-btn {
+      min-height: 28px;
+      padding: 4px 12px;
+      font-family: var(--font-system);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--system-blue);
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .code-block__copy-btn:hover {
+      background: rgba(0, 122, 255, 0.1);
+    }
+
+    .code-block__copy-btn:active {
+      transform: scale(0.97);
+    }
+
+    .code-block__copy-btn--copied {
+      color: var(--system-green);
+    }
+
+    pre {
+      margin: 0;
+      font-family: var(--font-mono);
+      font-size: 14px;
+      color: var(--label-primary);
+      line-height: 1.6;
+      white-space: pre;
+      overflow-x: auto;
+    }
+
+    code {
+      font-family: var(--font-mono);
+      font-size: 14px;
+    }
+
+    .code-comment {
+      color: var(--label-tertiary);
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: var(--space-8) var(--space-4);
+      color: var(--label-tertiary);
+      font-size: 13px;
+    }
+
+    .footer__link {
+      color: var(--system-blue);
+      text-decoration: none;
+    }
+
+    .footer__link:hover {
+      text-decoration: underline;
+    }
+
+    /* Safe Area Support */
+    @supports (padding: env(safe-area-inset-top)) {
+      body {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header__icon" role="img" aria-label="Proxy Icon">
+        🔄
+      </div>
+      <h1 class="header__title">Anyrouter Proxy</h1>
+      <p class="header__subtitle">Transparent HTTP Proxy Service</p>
+    </header>
+
+    <!-- About Card -->
+    <section class="card">
+      <h2 class="card__title">
+        <span class="card__icon" aria-hidden="true">ℹ️</span>
+        关于此服务
+      </h2>
+      <div class="card__content">
+        <p>这是一个透明代理服务，将所有 HTTP 请求转发到 <code>anyrouter.top</code>。适用于无法直接访问目标服务器的环境。</p>
+      </div>
+    </section>
+
+    <!-- Usage Card -->
+    <section class="card">
+      <h2 class="card__title">
+        <span class="card__icon" aria-hidden="true">📖</span>
+        使用方式
+      </h2>
+      <ol class="steps">
+        <li class="step">
+          <div class="step__number"></div>
+          <div class="step__content">配置你的 HTTP 客户端，将基础 URL 指向此代理服务</div>
+        </li>
+        <li class="step">
+          <div class="step__number"></div>
+          <div class="step__content">发送任意 HTTP 请求（GET/POST/PUT/DELETE...）</div>
+        </li>
+        <li class="step">
+          <div class="step__number"></div>
+          <div class="step__content">请求会自动转发到 anyrouter.top 并返回响应</div>
+        </li>
+      </ol>
+    </section>
+
+    <!-- Example Card -->
+    <section class="card">
+      <h2 class="card__title">
+        <span class="card__icon" aria-hidden="true">💻</span>
+        示例代码
+      </h2>
+
+      <div class="code-block">
+        <div class="code-block__header">
+          <span class="code-block__label">原始请求</span>
+          <button class="code-block__copy-btn" onclick="copyCode('code1', this)" aria-label="复制代码">
+            复制
+          </button>
+        </div>
+        <pre id="code1">curl https://anyrouter.top/api/user/self</pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block__header">
+          <span class="code-block__label">通过代理</span>
+          <button class="code-block__copy-btn" onclick="copyCode('code2', this)" aria-label="复制代码">
+            复制
+          </button>
+        </div>
+        <pre id="code2">curl http://localhost:7860/api/user/self</pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block__header">
+          <span class="code-block__label">POST 请求示例</span>
+          <button class="code-block__copy-btn" onclick="copyCode('code3', this)" aria-label="复制代码">
+            复制
+          </button>
+        </div>
+        <pre id="code3">curl -X POST http://localhost:7860/api/data \
+  -H "Content-Type: application/json" \
+  -d '{"key": "value"}'</pre>
+      </div>
+    </section>
+
+    <!-- Features Card -->
+    <section class="card">
+      <h2 class="card__title">
+        <span class="card__icon" aria-hidden="true">✨</span>
+        特性说明
+      </h2>
+      <div class="card__content">
+        <ul style="list-style: none; padding: 0;">
+          <li style="margin-bottom: 8px;">✓ 支持所有 HTTP 方法（GET/POST/PUT/DELETE/PATCH...）</li>
+          <li style="margin-bottom: 8px;">✓ 保留原始请求头和请求体</li>
+          <li style="margin-bottom: 8px;">✓ 透明转发，客户端无感知</li>
+          <li>✓ 无需修改现有代码，仅需更换基础 URL</li>
+        </ul>
+      </div>
+    </section>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>Powered by <a href="https://deno.land" class="footer__link" target="_blank" rel="noopener">Deno</a></p>
+  </footer>
+
+  <script>
+    /**
+     * Copy code to clipboard with visual feedback
+     * Follows Apple HIG interaction patterns
+     */
+    async function copyCode(elementId, button) {
+      const codeElement = document.getElementById(elementId);
+      const text = codeElement.textContent;
+
+      try {
+        await navigator.clipboard.writeText(text);
+
+        // Visual feedback
+        const originalText = button.textContent;
+        button.textContent = '已复制 ✓';
+        button.classList.add('code-block__copy-btn--copied');
+
+        // Reset after 2 seconds
+        setTimeout(() => {
+          button.textContent = originalText;
+          button.classList.remove('code-block__copy-btn--copied');
+        }, 2000);
+      } catch (err) {
+        console.error('Failed to copy:', err);
+        button.textContent = '复制失败';
+        setTimeout(() => {
+          button.textContent = '复制';
+        }, 2000);
+      }
+    }
+  </script>
+</body>
+</html>

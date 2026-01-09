@@ -1,15 +1,16 @@
-# Anyrouter Sign Proxy
+# Anyrouter Proxy
 
-Anyrouter 动态 Cookie 反向代理服务，自动处理 `acw_sc__v2` 验证
+透明 HTTP 代理服务，转发所有请求到 `anyrouter.top`
 
 ## 功能特性
 
-- 🔐 自动获取并注入动态 Cookie
-- 🚀 Deno 运行时，轻量高效
+- 🔄 完全透明的 HTTP 代理
+- 🚀 支持所有 HTTP 方法（GET/POST/PUT/DELETE/PATCH...）
+- 📦 保留原始请求头和请求体
+- 🎨 Apple HIG 风格使用说明页面
 - 🐳 Docker 容器化部署
-- 🔍 内置 Debug 调试页面
 
-## 快速部署
+## 快速开始
 
 ### 使用 Docker
 
@@ -28,7 +29,6 @@ docker run -d -p 7860:7860 ghcr.io/chencn/any-sign:latest
 git clone https://github.com/chencn/any-sign.git
 cd any-sign
 
-# 修改 docker-compose.yml 中的镜像地址
 # 启动服务
 docker-compose up -d
 ```
@@ -46,12 +46,31 @@ deno task dev
 
 ## 使用方式
 
-访问 `http://localhost:7860/` 查看调试页面
+访问 `http://localhost:7860/` 查看完整使用说明
 
-代理目标 API：
+### 基本示例
+
 ```bash
+# 原始请求
+curl https://anyrouter.top/api/user/self
+
+# 通过代理
 curl http://localhost:7860/api/user/self
 ```
+
+### POST 请求示例
+
+```bash
+curl -X POST http://localhost:7860/api/data \
+  -H "Content-Type: application/json" \
+  -d '{"key": "value"}'
+```
+
+## 环境变量
+
+| 变量 | 说明 | 默认值 |
+|------|------|--------|
+| `PORT` | 监听端口 | 7860 |
 
 ## GitHub Actions 自动构建
 
@@ -63,17 +82,14 @@ git tag v1.0.0
 git push origin v1.0.0
 ```
 
-## 环境变量
-
-| 变量 | 说明 | 默认值 |
-|------|------|--------|
-| `PORT` | 监听端口 | 7860 |
+镜像会自动发布到 `ghcr.io/chencn/any-sign:latest`
 
 ## 技术栈
 
 - Deno 2.1.4
 - TypeScript
 - Docker
+- Apple HIG Design
 
 ## License
 
