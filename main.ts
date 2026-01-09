@@ -21,9 +21,8 @@ async function relayRequest(req: Request): Promise<Response> {
     const url = new URL(req.url);
     const targetUrl = new URL(url.pathname + url.search, UPSTREAM);
 
-    // 检查 Cookie 中是否有 session 标签
+    // 总是获取动态 Cookie（anyrouter 需要 acw_sc__v2）
     const originalCookie = req.headers.get('cookie') || '';
-    const needsDynamicCookie = originalCookie.includes('session');
 
     // 构建请求头
     const headers = new Headers(req.headers);
@@ -34,27 +33,25 @@ async function relayRequest(req: Request): Promise<Response> {
     headers.delete('transfer-encoding');
     headers.delete('upgrade');
 
-    // 如果有 session 标签，获取动态 Cookie
-    if (needsDynamicCookie) {
-      const { cookie, error } = await getDynamicCookie(targetUrl);
-      if (!cookie) {
-        return new Response(JSON.stringify({
-          error: 'Failed to obtain dynamic cookie',
-          details: error
-        }), {
-          status: 502,
-          headers: { 'content-type': 'application/json' }
-        });
-      }
-      // 合并动态 Cookie 和原始 Cookie
-      headers.set('cookie', [cookie, originalCookie].filter(Boolean).join('; '));
+    // 获取动态 Cookie
+    const { cookie, error } = await getDynamicCookie(targetUrl);
+    if (!cookie) {
+      return new Response(JSON.stringify({
+        error: 'Failed to obtain dynamic cookie',
+        details: error
+      }), {
+        status: 502,
+        headers: { 'content-type': 'application/json' }
+      });
     }
+    // 合并动态 Cookie 和原始 Cookie
+    headers.set('cookie', [cookie, originalCookie].filter(Boolean).join('; '));
 
     // 中继请求
     const init: RequestInit = {
       method: req.method,
       headers,
-      redirect: 'follow'
+      redirect: 'manual'  // 改为 manual，避免无限重定向
     };
 
     // 处理请求体
