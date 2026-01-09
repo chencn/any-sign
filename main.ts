@@ -19,20 +19,36 @@ Deno.serve({ port }, async (req) => {
 async function relayRequest(req: Request): Promise<Response> {
   try {
     const url = new URL(req.url);
-
-    // 提取路径和参数，拼接到目标域名
     const targetUrl = new URL(url.pathname + url.search, UPSTREAM);
+
+    // 检查 Cookie 中是否有 session 标签
+    const originalCookie = req.headers.get('cookie') || '';
+    const needsDynamicCookie = originalCookie.includes('session');
 
     // 构建请求头
     const headers = new Headers(req.headers);
     headers.set('host', new URL(UPSTREAM).host);
-
-    // 移除可能导致冲突的 headers
     headers.delete('content-length');
     headers.delete('connection');
     headers.delete('keep-alive');
     headers.delete('transfer-encoding');
     headers.delete('upgrade');
+
+    // 如果有 session 标签，获取动态 Cookie
+    if (needsDynamicCookie) {
+      const { cookie, error } = await getDynamicCookie(targetUrl);
+      if (!cookie) {
+        return new Response(JSON.stringify({
+          error: 'Failed to obtain dynamic cookie',
+          details: error
+        }), {
+          status: 502,
+          headers: { 'content-type': 'application/json' }
+        });
+      }
+      // 合并动态 Cookie 和原始 Cookie
+      headers.set('cookie', [cookie, originalCookie].filter(Boolean).join('; '));
+    }
 
     // 中继请求
     const init: RequestInit = {
@@ -51,7 +67,7 @@ async function relayRequest(req: Request): Promise<Response> {
 
     const resp = await fetch(targetUrl.toString(), init);
 
-    // 返回响应（完整复制所有响应头）
+    // 返回响应
     const responseHeaders = new Headers(resp.headers);
 
     return new Response(resp.body, {
@@ -60,7 +76,6 @@ async function relayRequest(req: Request): Promise<Response> {
       headers: responseHeaders
     });
   } catch (error) {
-    // 错误处理
     console.error('Relay error:', error);
     return new Response(JSON.stringify({
       error: 'Gateway error',
@@ -70,4 +85,73 @@ async function relayRequest(req: Request): Promise<Response> {
       headers: { 'content-type': 'application/json' }
     });
   }
+}
+
+async function getDynamicCookie(targetUrl: URL): Promise<{ cookie: string | null; error: string | null }> {
+  try {
+    const challengeResp = await fetch(targetUrl.toString(), {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
+      redirect: 'manual',
+    });
+
+    const html = await challengeResp.text();
+    const { cookie, error } = extractCookieFromHtml(html);
+    return { cookie, error };
+  } catch (err) {
+    return { cookie: null, error: String(err) };
+  }
+}
+
+function extractCookieFromHtml(html: string): { cookie: string | null; error: string | null } {
+  const scripts = [...html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/gi)];
+  if (!scripts.length) {
+    return { cookie: null, error: 'no <script> tags found' };
+  }
+
+  let lastError: string | null = null;
+  for (const match of scripts) {
+    const scriptContent = match[1];
+    const { cookie, error } = executeScriptForCookie(scriptContent);
+    if (cookie) return { cookie, error: null };
+    lastError = error;
+  }
+
+  return { cookie: null, error: lastError || 'no cookie produced' };
+}
+
+function executeScriptForCookie(scriptContent: string): { cookie: string | null; error: string | null } {
+  let cookieValue: string | null = null;
+
+  const document = {
+    _cookie: '',
+    set cookie(val: string) {
+      this._cookie = val;
+      cookieValue = val;
+    },
+    get cookie() {
+      return this._cookie;
+    },
+    location: { reload() {} },
+  };
+  const location = document.location;
+  const windowObj: Record<string, unknown> = {};
+  const selfObj = windowObj;
+  const navigator = {};
+
+  try {
+    const wrapped = `(function(){${scriptContent}\n})();`;
+    eval(wrapped);
+  } catch (err) {
+    return { cookie: null, error: String(err) };
+  }
+
+  if (cookieValue) {
+    return { cookie: cookieValue.split(';')[0], error: null };
+  }
+  return { cookie: null, error: 'script executed but did not set cookie' };
 }
