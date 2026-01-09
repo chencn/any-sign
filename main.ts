@@ -12,12 +12,14 @@ Deno.serve({ port }, async (req) => {
     });
   }
 
-  // 其他所有请求透明转发
-  return proxyRequest(req);
+  // 其他所有请求中继到 anyrouter.top
+  return relayRequest(req);
 });
 
-async function proxyRequest(req: Request): Promise<Response> {
+async function relayRequest(req: Request): Promise<Response> {
   const url = new URL(req.url);
+
+  // 提取路径和参数，拼接到目标域名
   const targetUrl = new URL(url.pathname + url.search, UPSTREAM);
 
   // 构建请求头
@@ -25,7 +27,7 @@ async function proxyRequest(req: Request): Promise<Response> {
   headers.set('host', new URL(UPSTREAM).host);
   headers.delete('content-length');
 
-  // 转发请求
+  // 中继请求
   const init: RequestInit = {
     method: req.method,
     headers,

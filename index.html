@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Anyrouter Proxy</title>
+  <title>Anyrouter Gateway</title>
   <style>
     /**
      * Apple HIG Compliant Design
@@ -337,11 +337,11 @@
   <div class="container">
     <!-- Header -->
     <header class="header">
-      <div class="header__icon" role="img" aria-label="Proxy Icon">
-        🔄
+      <div class="header__icon" role="img" aria-label="Gateway Icon">
+        🌐
       </div>
-      <h1 class="header__title">Anyrouter Proxy</h1>
-      <p class="header__subtitle">Transparent HTTP Proxy Service</p>
+      <h1 class="header__title">Anyrouter Gateway</h1>
+      <p class="header__subtitle">HTTP Request Gateway Service</p>
     </header>
 
     <!-- About Card -->
@@ -351,7 +351,7 @@
         关于此服务
       </h2>
       <div class="card__content">
-        <p>这是一个透明代理服务，将所有 HTTP 请求转发到 <code>anyrouter.top</code>。适用于无法直接访问目标服务器的环境。</p>
+        <p>提供 HTTP 请求中继服务，帮助客户端访问目标 API。所有请求保持原始格式不变。</p>
       </div>
     </section>
 
@@ -364,15 +364,15 @@
       <ol class="steps">
         <li class="step">
           <div class="step__number"></div>
-          <div class="step__content">配置你的 HTTP 客户端，将基础 URL 指向此代理服务</div>
+          <div class="step__content">将 HTTP 请求发送到此服务地址</div>
         </li>
         <li class="step">
           <div class="step__number"></div>
-          <div class="step__content">发送任意 HTTP 请求（GET/POST/PUT/DELETE...）</div>
+          <div class="step__content">支持 GET/POST/PUT/DELETE 等所有标准方法</div>
         </li>
         <li class="step">
           <div class="step__number"></div>
-          <div class="step__content">请求会自动转发到 anyrouter.top 并返回响应</div>
+          <div class="step__content">自动处理并返回目标服务器响应</div>
         </li>
       </ol>
     </section>
@@ -386,32 +386,22 @@
 
       <div class="code-block">
         <div class="code-block__header">
-          <span class="code-block__label">原始请求</span>
+          <span class="code-block__label">GET 请求</span>
           <button class="code-block__copy-btn" onclick="copyCode('code1', this)" aria-label="复制代码">
             复制
           </button>
         </div>
-        <pre id="code1">curl https://anyrouter.top/api/user/self</pre>
+        <pre id="code1">curl http://localhost:7860/api/user/self</pre>
       </div>
 
       <div class="code-block">
         <div class="code-block__header">
-          <span class="code-block__label">通过代理</span>
+          <span class="code-block__label">POST 请求</span>
           <button class="code-block__copy-btn" onclick="copyCode('code2', this)" aria-label="复制代码">
             复制
           </button>
         </div>
-        <pre id="code2">curl http://localhost:7860/api/user/self</pre>
-      </div>
-
-      <div class="code-block">
-        <div class="code-block__header">
-          <span class="code-block__label">POST 请求示例</span>
-          <button class="code-block__copy-btn" onclick="copyCode('code3', this)" aria-label="复制代码">
-            复制
-          </button>
-        </div>
-        <pre id="code3">curl -X POST http://localhost:7860/api/data \
+        <pre id="code2">curl -X POST http://localhost:7860/api/data \
   -H "Content-Type: application/json" \
   -d '{"key": "value"}'</pre>
       </div>
@@ -427,8 +417,8 @@
         <ul style="list-style: none; padding: 0;">
           <li style="margin-bottom: 8px;">✓ 支持所有 HTTP 方法（GET/POST/PUT/DELETE/PATCH...）</li>
           <li style="margin-bottom: 8px;">✓ 保留原始请求头和请求体</li>
-          <li style="margin-bottom: 8px;">✓ 透明转发，客户端无感知</li>
-          <li>✓ 无需修改现有代码，仅需更换基础 URL</li>
+          <li style="margin-bottom: 8px;">✓ 自动处理，客户端无感知</li>
+          <li>✓ 简单易用，仅需更换请求地址</li>
         </ul>
       </div>
     </section>

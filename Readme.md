@@ -1,10 +1,10 @@
-# Anyrouter Proxy
+# Anyrouter Gateway
 
-透明 HTTP 代理服务，转发所有请求到 `anyrouter.top`
+HTTP 请求中继服务，所有请求自动中继到 anyrouter.top
 
 ## 功能特性
 
-- 🔄 完全透明的 HTTP 代理
+- 🌐 自动域名替换，固定中继到 anyrouter.top
 - 🚀 支持所有 HTTP 方法（GET/POST/PUT/DELETE/PATCH...）
 - 📦 保留原始请求头和请求体
 - 🎨 Apple HIG 风格使用说明页面
@@ -48,19 +48,25 @@ deno task dev
 
 访问 `http://localhost:7860/` 查看完整使用说明
 
+### 工作原理
+
+所有请求的域名都会被替换成 `anyrouter.top`，只保留路径和参数：
+
+```bash
+# 客户端请求
+curl http://localhost:7860/api/user/self
+
+# 实际请求
+https://anyrouter.top/api/user/self
+```
+
 ### 基本示例
 
 ```bash
-# 原始请求
-curl https://anyrouter.top/api/user/self
-
-# 通过代理
+# GET 请求
 curl http://localhost:7860/api/user/self
-```
 
-### POST 请求示例
-
-```bash
+# POST 请求
 curl -X POST http://localhost:7860/api/data \
   -H "Content-Type: application/json" \
   -d '{"key": "value"}'
