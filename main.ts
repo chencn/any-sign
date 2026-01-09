@@ -30,7 +30,9 @@ const DEBUG_HTML = `<!doctype html>
 </body>
 </html>`;
 
-Deno.serve(async (req) => {
+const port = parseInt(Deno.env.get('PORT') || '7860');
+
+Deno.serve({ port }, async (req) => {
   const url = new URL(req.url);
 
   if (url.pathname === '/' || url.pathname === '/debug') {
