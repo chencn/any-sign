@@ -7,6 +7,8 @@ services:
       - "7860:7860"
     environment:
       - PORT=7860
+      # 可选：启动时追加容器 /etc/hosts，多个映射用英文逗号分隔
+      # - HOST_OVERRIDES=anyrouter.top=47.246.23.200
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:7860/"]
       interval: 30s

@@ -7,7 +7,9 @@ WORKDIR /app
 # 复制项目文件
 COPY deno.json .
 COPY main.ts .
+COPY docker-entrypoint.sh .
 COPY index.html .
+RUN sed -i 's/\r$//' docker-entrypoint.sh && chmod +x docker-entrypoint.sh
 
 # 缓存依赖（利用 Docker layer cache）
 RUN deno cache main.ts
@@ -16,5 +18,9 @@ RUN deno cache main.ts
 ENV PORT=7860
 EXPOSE 7860
 
+# HOST_OVERRIDES 需要在启动时追加 /etc/hosts
+USER root
+ENTRYPOINT ["./docker-entrypoint.sh"]
+
 # 启动应用
-CMD ["deno", "run", "--allow-net", "--allow-env", "--allow-read", "main.ts"]
+CMD ["deno", "run", "--allow-net", "--allow-env=PORT", "--allow-read=/app", "main.ts"]

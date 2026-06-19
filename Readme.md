@@ -20,6 +20,11 @@ docker pull ghcr.io/chencn/any-sign:latest
 
 # 运行容器
 docker run -d -p 7860:7860 ghcr.io/chencn/any-sign:latest
+
+# 可选：覆盖容器内域名解析
+docker run -d -p 7860:7860 \
+  -e HOST_OVERRIDES="anyrouter.top=47.246.23.200" \
+  ghcr.io/chencn/any-sign:latest
 ```
 
 ### 使用 Docker Compose
@@ -77,6 +82,7 @@ curl -X POST http://localhost:7860/api/data \
 | 变量 | 说明 | 默认值 |
 |------|------|--------|
 | `PORT` | 监听端口 | 7860 |
+| `HOST_OVERRIDES` | 可选，启动时追加容器 `/etc/hosts`，格式：`域名=IP`，多个映射用英文逗号分隔 | 空 |
 
 ## GitHub Actions 自动构建
 
